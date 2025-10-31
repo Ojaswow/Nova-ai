@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova — AI Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Left side: Chat -->
+    <div class="chat card">
+      <div class="header">
+        <div class="brand">N</div>
+        <div>
+          <h2 class="title">Nova AI</h2>
+          <p class="subtitle">Your smart assistant powered by Gemini ✨</p>
+        </div>
+      </div>
+
+      <div class="messages"></div>
+
+      <form id="chatForm" class="input-area">
+        <textarea id="prompt" placeholder="Type your question or command..." required></textarea>
+        <button type="submit" class="send">Send</button>
+      </form>
+    </div>
+
+    <!-- Right side: Controls -->
+    <div class="side">
+      <div class="panel">
+        <h3>Model Settings ⚙️</h3>
+        <div class="select">
+          <label for="model">Model</label>
+          <select id="model">
+            <option>gemini-2.5</option>
+            <option>gemini-1.5-flash</option>
+            <option>gemini-1.5-pro</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="temp">Creativity</label>
+          <input id="temp" type="range" min="0" max="1" step="0.1" value="0.7" />
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Quick Prompts 💬</h3>
+        <div class="presets">
+          <div class="preset" data-preset="Explain this JavaScript code">JS Explain</div>
+          <div class="preset" data-preset="Summarize this text">Summarize</div>
+          <div class="preset" data-preset="Create a short poem about AI">Poem</div>
+          <div class="preset" data-preset="Help me debug Python code">Debug</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>© 2025 Nova Labs</span>
+        <a href="#" title="Powered by Gemini">⚡ Gemini API</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
