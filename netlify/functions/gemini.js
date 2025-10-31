@@ -1,72 +1,85 @@
-// functions/gemini.js
-const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+// netlify/functions/gemini.js
 
-exports.handler = async function(event, context) {
-  // Only allow POST
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
-
-  // parse body
-  let body;
-  try {
-    body = JSON.parse(event.body || '{}');
-  } catch (e) {
-    return { statusCode: 400, body: 'Invalid JSON' };
+export async function handler(event) {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  const prompt = (body.prompt || '').trim();
-  if (!prompt) return { statusCode: 400, body: JSON.stringify({ error: 'Empty prompt' }) };
+  let body;
+  try {
+    body = JSON.parse(event.body || "{}");
+  } catch {
+    return { statusCode: 400, body: "Invalid JSON" };
+  }
 
-  // Read API key from env var — set this in Netlify settings (GEMINI_API_KEY).
+  const prompt = (body.prompt || "").trim();
+  if (!prompt) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Empty prompt" }),
+    };
+  }
+
   const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfigured: GEMINI_API_KEY missing' }) };
+  if (!API_KEY) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Missing GEMINI_API_KEY" }),
+    };
+  }
 
   try {
-    // Example URL — update if Google changes endpoints. Refer to Gemini quickstart for exact path & params.
-    const url = 'https://api.generativeai.google/v1beta/models/gemini-2.5/outputs:generate';
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+
     const payload = {
-      prompt: {
-        text: prompt
-      },
-      // adjust params as needed; many Gemini endpoints accept different JSON shapes.
-      // If using Vertex AI, you might use `instances` or `input` depending on API variant.
-      maxOutputTokens: 800
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
     };
 
-    const res = await fetch(url, {
-      method: 'POST',
+    const response = await fetch(url, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}` // or `x-api-key` depending on Google API type
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify(payload),
-      // optionally set a timeout in your environment/platform
     });
 
-    if (!res.ok) {
-      const t = await res.text();
-      return { statusCode: res.status, body: JSON.stringify({ error: t }) };
+    if (!response.ok) {
+      const errText = await response.text();
+      return {
+        statusCode: response.status,
+        body: JSON.stringify({ error: errText }),
+      };
     }
 
-    const data = await res.json();
+    const data = await response.json();
+    let output = "";
 
-    // Try to extract generated text — shape depends on API; adapt to your response.
-    // Example (pseudo): data.output[0].content[0].text
-    let text = '';
-    if (data?.candidates?.length) {
-      text = data.candidates.map(c=>c.output || c.text || '').join('\n').trim();
-    } else if (data?.output?.[0]?.content) {
-      // fallback parsing
-      text = data.output[0].content.map(c => c.text || c).join('\n');
+    if (
+      data &&
+      data.candidates &&
+      data.candidates[0] &&
+      data.candidates[0].content
+    ) {
+      const parts = data.candidates[0].content.parts;
+      output = parts.map((p) => p.text || "").join("\n").trim();
     } else {
-      text = JSON.stringify(data).slice(0, 2000);
+      output = "No text response from Gemini API.";
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text: output }),
     };
-
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message || String(err) }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message }),
+    };
   }
-};
+      }
